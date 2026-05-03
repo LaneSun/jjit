@@ -42,7 +42,7 @@ Combine multiple related commits into a single well-described commit. Useful for
 
 ### Multi-language Support
 
-Configure the output language for AI-generated content. Default is Chinese, with support for any language the LLM understands.
+Configure the output language for AI-generated content. Default is `auto`, which automatically detects the language from the `LANG` environment variable, with support for any language the LLM understands.
 
 ## Requirements
 
@@ -187,7 +187,7 @@ jjit --no-thinking pack "all" # Hide reasoning output
 | `model` | LLM model to use | `deepseek-v4-flash` |
 | `base_url` | API endpoint URL | `https://api.deepseek.com` |
 | `show_thinking` | Display AI reasoning | `true` |
-| `language` | Output language for AI content | `zh` |
+| `language` | Output language for AI content | `auto` |
 | `verbose` | Verbose output | `false` |
 | `debug` | Debug mode | `false` |
 
@@ -203,13 +203,16 @@ Settings are resolved in this order (later overrides earlier):
 
 ### Language Configuration
 
-Set the language for AI-generated content:
+Set the language for AI-generated content. The default is `auto`, which automatically detects the language from the `LANG` environment variable:
 
 ```bash
+jjit config set language auto  # Auto-detect from LANG environment variable (default)
 jjit config set language zh    # Chinese
 jjit config set language en    # English
 jjit config set language ja    # Japanese
 ```
+
+When set to `auto`, jjit reads the `LANG` environment variable (e.g., `zh_CN.UTF-8` -> `zh`, `en_US.UTF-8` -> `en`) and falls back to `zh` if detection fails.
 
 ## Architecture
 

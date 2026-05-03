@@ -115,10 +115,10 @@ Date: {}
 }
 
 fn add_language_hint(prompt: &str, config: &Config) -> String {
-    match config.get("language") {
-        Some(lang) if !lang.is_empty() && lang != "en" => {
-            format!("{}\n\nYou MUST respond in {} language.", prompt, lang)
-        }
-        _ => prompt.to_string(),
+    let lang = config.resolve_language();
+    if !lang.is_empty() && lang != "en" {
+        format!("{}\n\nYou MUST respond in {} language.", prompt, lang)
+    } else {
+        prompt.to_string()
     }
 }

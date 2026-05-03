@@ -42,7 +42,7 @@ jjit 是一款命令行工具，为 [jj](https://jj-vcs.github.io/jj/) 版本控
 
 ### 多语言支持
 
-支持配置 AI 输出的语言。默认为中文，支持任何 LLM 能理解的语言。
+支持配置 AI 输出的语言。默认值为 `auto`，自动从 `LANG` 环境变量检测语言，支持任何 LLM 能理解的语言。
 
 ## 环境要求
 
@@ -193,7 +193,7 @@ jjit --no-thinking pack "所有" # 隐藏推理输出
 | `model` | 使用的 LLM 模型 | `deepseek-v4-flash` |
 | `base_url` | API 端点地址 | `https://api.deepseek.com` |
 | `show_thinking` | 显示 AI 推理过程 | `true` |
-| `language` | AI 内容输出语言 | `zh` |
+| `language` | AI 内容输出语言 | `auto` |
 | `verbose` | 详细输出 | `false` |
 | `debug` | 调试模式 | `false` |
 
@@ -209,13 +209,16 @@ jjit --no-thinking pack "所有" # 隐藏推理输出
 
 ### 语言配置
 
-设置 AI 生成内容的语言：
+设置 AI 生成内容的语言。默认值为 `auto`，自动从 `LANG` 环境变量检测语言：
 
 ```bash
+jjit config set language auto  # 从 LANG 环境变量自动检测（默认）
 jjit config set language zh    # 中文
 jjit config set language en    # 英文
 jjit config set language ja    # 日文
 ```
+
+设置为 `auto` 时，jjit 会读取 `LANG` 环境变量（例如 `zh_CN.UTF-8` -> `zh`，`en_US.UTF-8` -> `en`），如果检测失败则回退到 `zh`。
 
 ## 架构设计
 

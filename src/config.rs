@@ -23,7 +23,7 @@ impl Default for Config {
         values.insert("verbose".to_string(), "false".to_string());
         values.insert("show_thinking".to_string(), "true".to_string());
         values.insert("debug".to_string(), "false".to_string());
-        values.insert("language".to_string(), "zh".to_string());
+        values.insert("language".to_string(), "auto".to_string());
         Self { values }
     }
 }
@@ -127,5 +127,32 @@ impl Config {
     pub fn ensure_api_key(&self) -> Result<String> {
         self.get("api_key")
             .context("DeepSeek API key not configured. Run: jjit config set api_key <your-key>")
+    }
+
+    /// Resolve the effective language.
+    /// If the configured value is "auto" or missing, try to detect from the LANG environment variable.
+    /// Falls back to "zh" if detection fails.
+    pub fn resolve_language(&self) -> String {
+        let configured = self.get("language").unwrap_or_default();
+        if configured.is_empty() || configured == "auto" {
+            Self::detect_lang_from_env().unwrap_or_else(|| "zh".to_string())
+        } else {
+            configured
+        }
+    }
+
+    fn detect_lang_from_env() -> Option<String> {
+        let lang = env::var("LANG").ok()?;
+        // LANG format: "zh_CN.UTF-8" or "en_US.UTF-8" or "C"
+        // Extract the first two characters as language code
+        let lang_part = lang.split('.').next()?;
+        let code = lang_part.split('_').next()?;
+        if code.len() >= 2 {
+            Some(code[..2].to_lowercase())
+        } else if code == "C" || code == "POSIX" {
+            Some("en".to_string())
+        } else {
+            None
+        }
     }
 }
