@@ -1,0 +1,29 @@
+[package]
+name = "jjit"
+version = "0.1.0"
+edition = "2021"
+authors = ["jjit contributors"]
+description = "AI-powered jj version management tool"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/jjit"
+keywords = ["jj", "vcs", "git", "ai", "llm"]
+categories = ["command-line-utilities", "development-tools"]
+rust-version = "1.75"
+
+[[bin]]
+name = "jjit"
+path = "src/main.rs"
+
+[dependencies]
+vcs-runner = "0.12.1"
+clap = { version = "4.5", features = ["derive"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+anyhow = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+directories = "5.0"
+chrono = "0.4"
+quick-xml = { version = "0.36", features = ["serialize"] }
+futures-util = "0.3"

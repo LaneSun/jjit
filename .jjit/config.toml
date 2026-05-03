@@ -1,0 +1,5 @@
+verbose = "false"
+show_thinking = "true"
+debug = "false"
+base_url = "https://api.deepseek.com"
+model = "deepseek-v4-flash"
