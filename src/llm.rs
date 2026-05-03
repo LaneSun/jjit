@@ -100,7 +100,10 @@ impl LlmClient {
         let mut last_error = None;
 
         for attempt in 0..=MAX_RETRIES {
-            match self.chat_stream(system_prompt, user_prompt, show_thinking, debug).await {
+            match self
+                .chat_stream(system_prompt, user_prompt, show_thinking, debug)
+                .await
+            {
                 Ok(response) => {
                     if verbose {
                         eprintln!("LLM response received");
@@ -152,7 +155,11 @@ impl LlmClient {
             stream: true,
             // Thinking mode doesn't support temperature
             temperature: if show_thinking { None } else { Some(0.7) },
-            reasoning_effort: if show_thinking { Some("high".to_string()) } else { None },
+            reasoning_effort: if show_thinking {
+                Some("high".to_string())
+            } else {
+                None
+            },
             thinking: if show_thinking {
                 Some(ThinkingConfig {
                     thinking_type: "enabled".to_string(),
@@ -163,7 +170,10 @@ impl LlmClient {
         };
 
         if debug {
-            eprintln!("[DEBUG] Sending streaming request to {}/chat/completions", self.base_url);
+            eprintln!(
+                "[DEBUG] Sending streaming request to {}/chat/completions",
+                self.base_url
+            );
         }
 
         let response = self
@@ -191,9 +201,8 @@ impl LlmClient {
         }
 
         // Stream the response
-        let no_color = std::env::var("JJIT_NO_COLOR").is_ok() 
-            || std::env::var("NO_COLOR").is_ok();
-        
+        let no_color = std::env::var("JJIT_NO_COLOR").is_ok() || std::env::var("NO_COLOR").is_ok();
+
         let mut content = String::new();
         let mut thinking_started = false;
         let mut thinking_ended = false;
@@ -204,19 +213,19 @@ impl LlmClient {
         while let Some(chunk_result) = stream.next().await {
             let chunk = chunk_result.with_context(|| "Failed to read response stream")?;
             let text = String::from_utf8_lossy(&chunk);
-            
+
             for ch in text.chars() {
                 if ch == '\n' {
                     // Process complete line
                     let line = line_buffer.trim().to_string();
                     line_buffer.clear();
-                    
+
                     if line.is_empty() || !line.starts_with("data: ") {
                         continue;
                     }
-                    
+
                     let data = &line[6..]; // Skip "data: "
-                    
+
                     if data == "[DONE]" {
                         if thinking_started && !thinking_ended {
                             if !no_color {
@@ -230,7 +239,7 @@ impl LlmClient {
                         }
                         return Ok(content);
                     }
-                    
+
                     match serde_json::from_str::<StreamChatResponse>(data) {
                         Ok(stream_resp) => {
                             if let Some(choice) = stream_resp.choices.first() {
@@ -250,7 +259,7 @@ impl LlmClient {
                                         }
                                     }
                                 }
-                                
+
                                 // Handle content
                                 if let Some(ref text) = choice.delta.content {
                                     if !text.is_empty() {
@@ -266,7 +275,7 @@ impl LlmClient {
                                         content.push_str(text);
                                     }
                                 }
-                                
+
                                 // Check if this is the final chunk
                                 if choice.finish_reason.is_some() {
                                     if thinking_started && !thinking_ended {
@@ -277,7 +286,10 @@ impl LlmClient {
                                         let _ = std::io::stderr().flush();
                                     }
                                     if debug {
-                                        eprintln!("[DEBUG] Response content length: {}", content.len());
+                                        eprintln!(
+                                            "[DEBUG] Response content length: {}",
+                                            content.len()
+                                        );
                                     }
                                     return Ok(content);
                                 }

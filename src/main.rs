@@ -29,8 +29,12 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Commit { dry_run } => jjit::commands::commit::run(&config, dry_run).await,
-        Commands::Goto { query, dry_run } => jjit::commands::goto::run(&config, &query, dry_run).await,
-        Commands::Pack { query, dry_run } => jjit::commands::pack::run(&config, &query, dry_run).await,
+        Commands::Goto { query, dry_run } => {
+            jjit::commands::goto::run(&config, &query, dry_run).await
+        }
+        Commands::Pack { query, dry_run } => {
+            jjit::commands::pack::run(&config, &query, dry_run).await
+        }
         Commands::Config { action } => jjit::commands::config::run(action),
     }
 }

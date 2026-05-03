@@ -46,7 +46,7 @@ Configure the output language for AI-generated content. Default is Chinese, with
 
 ## Requirements
 
-- Rust 1.75 or later
+- Rust 1.91 or later
 - jj (Jujutsu) version control system installed
 - DeepSeek API key
 

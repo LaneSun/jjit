@@ -75,15 +75,19 @@ Date: {}
 
     let client = LlmClient::new(api_key, base_url, model);
 
-    let user_prompt = format!(
-        "User request: {}\n\nCommit history:\n{}",
-        query, log_text
-    );
+    let user_prompt = format!("User request: {}\n\nCommit history:\n{}", query, log_text);
 
     let system_prompt = add_language_hint(SYSTEM_PROMPT, config);
 
     let response = client
-        .chat(&system_prompt, &user_prompt, verbose, show_prompt, show_thinking, debug)
+        .chat(
+            &system_prompt,
+            &user_prompt,
+            verbose,
+            show_prompt,
+            show_thinking,
+            debug,
+        )
         .await
         .context("Failed to get LLM response")?;
 

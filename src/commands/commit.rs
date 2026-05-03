@@ -70,18 +70,21 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
     let system_prompt = add_language_hint(SYSTEM_PROMPT, config);
 
     let response = client
-        .chat(&system_prompt, &user_prompt, verbose, show_prompt, show_thinking, debug)
+        .chat(
+            &system_prompt,
+            &user_prompt,
+            verbose,
+            show_prompt,
+            show_thinking,
+            debug,
+        )
         .await
         .context("Failed to get LLM response")?;
 
     let output = parse_xml_output(&response).context("Failed to parse LLM XML response")?;
 
     match output {
-        LlmOutput::Commit(CommitOutput {
-            message,
-            body,
-            ..
-        }) => {
+        LlmOutput::Commit(CommitOutput { message, body, .. }) => {
             let full_message = if let Some(body_text) = body {
                 format!("{}\n\n{}", message, body_text)
             } else {

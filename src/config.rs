@@ -94,8 +94,8 @@ impl Config {
             fs::create_dir_all(parent)
                 .with_context(|| format!("Failed to create config directory {:?}", parent))?;
         }
-        let content = toml::to_string_pretty(self)
-            .with_context(|| "Failed to serialize config to TOML")?;
+        let content =
+            toml::to_string_pretty(self).with_context(|| "Failed to serialize config to TOML")?;
         fs::write(&path, content)
             .with_context(|| format!("Failed to write global config to {:?}", path))?;
         Ok(())
@@ -107,8 +107,8 @@ impl Config {
             fs::create_dir_all(parent)
                 .with_context(|| format!("Failed to create config directory {:?}", parent))?;
         }
-        let content = toml::to_string_pretty(self)
-            .with_context(|| "Failed to serialize config to TOML")?;
+        let content =
+            toml::to_string_pretty(self).with_context(|| "Failed to serialize config to TOML")?;
         fs::write(&path, content)
             .with_context(|| format!("Failed to write local config to {:?}", path))?;
         Ok(())

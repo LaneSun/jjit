@@ -46,7 +46,7 @@ jjit 是一款命令行工具，为 [jj](https://jj-vcs.github.io/jj/) 版本控
 
 ## 环境要求
 
-- Rust 1.75 或更高版本
+- Rust 1.91 或更高版本
 - 已安装 [jj](https://jj-vcs.github.io/jj/latest/install-and-setup/) (Jujutsu)
 - DeepSeek API 密钥
 

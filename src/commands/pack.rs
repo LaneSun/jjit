@@ -86,15 +86,19 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
 
     let client = LlmClient::new(api_key, base_url, model);
 
-    let user_prompt = format!(
-        "User request: {}\n\nCommit history:\n{}",
-        query, log_text
-    );
+    let user_prompt = format!("User request: {}\n\nCommit history:\n{}", query, log_text);
 
     let system_prompt = add_language_hint(SYSTEM_PROMPT, config);
 
     let response = client
-        .chat(&system_prompt, &user_prompt, verbose, show_prompt, show_thinking, debug)
+        .chat(
+            &system_prompt,
+            &user_prompt,
+            verbose,
+            show_prompt,
+            show_thinking,
+            debug,
+        )
         .await
         .context("Failed to get LLM response")?;
 
@@ -135,12 +139,21 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
             };
 
             if dry_run {
-                println!("[dry-run] pack {} commits into {}", non_empty_commits.len(), target_change_id);
+                println!(
+                    "[dry-run] pack {} commits into {}",
+                    non_empty_commits.len(),
+                    target_change_id
+                );
             } else {
                 // Squash each subsequent commit into the first one
                 for entry in non_empty_commits.iter().skip(1) {
                     jj_util::squash_into(&entry.commit_id, target_change_id, &full_message)
-                        .with_context(|| format!("Failed to squash {} into {}", entry.commit_id, target_change_id))?;
+                        .with_context(|| {
+                            format!(
+                                "Failed to squash {} into {}",
+                                entry.commit_id, target_change_id
+                            )
+                        })?;
                 }
                 // Update description of the combined commit
                 jj_util::describe_change(target_change_id, &full_message)

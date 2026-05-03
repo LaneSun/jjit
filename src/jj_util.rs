@@ -17,8 +17,7 @@ fn run_jj_with_debug(args: &[&str]) -> Result<String> {
     if std::env::var("JJIT_DEBUG").is_ok() || std::env::var("DEBUG").is_ok() {
         eprintln!("[DEBUG] jj {}", args.join(" "));
     }
-    run_jj_utf8(&path, args)
-        .map_err(map_run_error)
+    run_jj_utf8(&path, args).map_err(map_run_error)
 }
 
 // Custom template with full commit_id for reliable revset resolution
@@ -96,8 +95,16 @@ fn parse_log_entries(output: &str) -> Vec<LogEntry> {
             author_date: raw.author_date,
             description: raw.description,
             parents: raw.parents.into_iter().filter(|p| !p.is_empty()).collect(),
-            local_bookmarks: raw.local_bookmarks.into_iter().filter(|b| !b.is_empty()).collect(),
-            remote_bookmarks: raw.remote_bookmarks.into_iter().filter(|b| !b.is_empty()).collect(),
+            local_bookmarks: raw
+                .local_bookmarks
+                .into_iter()
+                .filter(|b| !b.is_empty())
+                .collect(),
+            remote_bookmarks: raw
+                .remote_bookmarks
+                .into_iter()
+                .filter(|b| !b.is_empty())
+                .collect(),
             is_working_copy: raw.is_working_copy == "true",
             conflict: raw.conflict == "true",
             empty: raw.empty == "true",
@@ -107,72 +114,61 @@ fn parse_log_entries(output: &str) -> Vec<LogEntry> {
 }
 
 pub fn get_repo_root() -> Result<String> {
-    let output = run_jj_with_debug(&["root"])
-        .context("Failed to get jj repo root")?;
+    let output = run_jj_with_debug(&["root"]).context("Failed to get jj repo root")?;
     Ok(output.trim().to_string())
 }
 
 pub fn get_status() -> Result<String> {
-    run_jj_with_debug(&["status"])
-        .context("Failed to get jj status")
+    run_jj_with_debug(&["status"]).context("Failed to get jj status")
 }
 
 pub fn get_diff_summary() -> Result<Vec<FileChange>> {
-    let output = run_jj_with_debug(&["diff", "--summary"])
-        .context("Failed to get diff summary")?;
+    let output = run_jj_with_debug(&["diff", "--summary"]).context("Failed to get diff summary")?;
     let changes = parse_diff_summary(&output);
     Ok(changes)
 }
 
 pub fn get_diff() -> Result<String> {
-    run_jj_with_debug(&["diff"])
-        .context("Failed to get diff")
+    run_jj_with_debug(&["diff"]).context("Failed to get diff")
 }
 
 pub fn get_diff_for_rev(rev: &str) -> Result<String> {
-    run_jj_with_debug(&["diff", "-r", rev])
-        .context("Failed to get diff for revision")
+    run_jj_with_debug(&["diff", "-r", rev]).context("Failed to get diff for revision")
 }
 
 pub fn get_log_all() -> Result<Vec<LogEntry>> {
-    let output = run_jj_with_debug(
-        &[
-            "log",
-            "-r",
-            "all()",
-            "--template",
-            FULL_LOG_TEMPLATE,
-            "--no-graph",
-        ],
-    )
+    let output = run_jj_with_debug(&[
+        "log",
+        "-r",
+        "all()",
+        "--template",
+        FULL_LOG_TEMPLATE,
+        "--no-graph",
+    ])
     .context("Failed to get jj log")?;
     Ok(parse_log_entries(&output))
 }
 
 pub fn get_log_today() -> Result<Vec<LogEntry>> {
-    let output = run_jj_with_debug(
-        &[
-            "log",
-            "-r",
-            "author_date(after:'today 00:00')",
-            "--template",
-            FULL_LOG_TEMPLATE,
-            "--no-graph",
-        ],
-    )
+    let output = run_jj_with_debug(&[
+        "log",
+        "-r",
+        "author_date(after:'today 00:00')",
+        "--template",
+        FULL_LOG_TEMPLATE,
+        "--no-graph",
+    ])
     .context("Failed to get today's jj log")?;
     Ok(parse_log_entries(&output))
 }
 
 pub fn commit(message: &str) -> Result<()> {
-    run_jj_with_debug(&["commit", "-m", message])
-        .context("Failed to create commit")?;
+    run_jj_with_debug(&["commit", "-m", message]).context("Failed to create commit")?;
     Ok(())
 }
 
 pub fn new_commit(rev: &str) -> Result<()> {
-    run_jj_with_debug(&["new", rev])
-        .context("Failed to create new commit")?;
+    run_jj_with_debug(&["new", rev]).context("Failed to create new commit")?;
     Ok(())
 }
 
