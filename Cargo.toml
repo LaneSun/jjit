@@ -10,7 +10,7 @@ documentation = "https://github.com/LaneSun/jjit/blob/main/README.md"
 homepage = "https://github.com/LaneSun/jjit"
 keywords = ["jj", "vcs", "git", "ai", "llm"]
 categories = ["command-line-utilities", "development-tools"]
-rust-version = "1.80"
+rust-version = "1.85"
 
 [[bin]]
 name = "jjit"
