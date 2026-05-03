@@ -1,5 +1,10 @@
 # jjit - AI-powered jj Version Management
 
+[![Crates.io](https://img.shields.io/crates/v/jjit)](https://crates.io/crates/jjit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[English](README.md) | [中文](README.zh.md)
+
 jjit is a command-line tool that brings AI assistance to [jj](https://jj-vcs.github.io/jj/) version control. It uses the DeepSeek API to understand your codebase changes and automatically generate commit messages, navigate commit history, and organize your commits.
 
 ## Table of Contents
@@ -264,13 +269,6 @@ cargo build --release
 ```bash
 cargo test
 ```
-
-### Iteration History
-
-The project has undergone multiple rounds of refinement. See the iteration reports for details:
-
-- `TURN1.md` through `TURN8.md`: Progressive improvements to parsing, error handling, streaming, and command behavior
-- `AGENTS.md`: Development guidelines and workflow documentation
 
 ### Key Design Decisions
 
