@@ -52,13 +52,19 @@ jjit 是一款命令行工具，为 [jj](https://jj-vcs.github.io/jj/) 版本控
 
 ## 安装
 
-### 方式一：使用 install 脚本（推荐）
+### 方式一：一键安装（推荐）
 
 ```bash
-git clone https://github.com/LaneSun/jjit
-cd jjit
-./install.sh
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/LaneSun/jjit/main/install.sh | sh
 ```
+
+脚本会自动检测你的平台，从 GitHub releases 下载最新二进制文件并安装。
+
+**支持的平台：**
+- Linux (x86_64, aarch64)
+- macOS (Intel, Apple Silicon)
+
+脚本会优先安装到 `/usr/local/bin`（如果你有写入权限），否则安装到 `~/.local/bin`。
 
 ### 方式二：使用 Cargo
 

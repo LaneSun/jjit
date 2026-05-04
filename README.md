@@ -52,15 +52,27 @@ Configure the output language for AI-generated content. Default is `auto`, which
 
 ## Installation
 
-### Using the Install Script (Recommended)
+### One-line Install (Recommended)
 
 ```bash
-git clone https://github.com/yourusername/jjit
-cd jjit
-./install.sh
+curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/LaneSun/jjit/main/install.sh | sh
 ```
 
+This automatically detects your platform, downloads the latest binary from GitHub releases, and installs it.
+
+**Supported platforms:**
+- Linux (x86_64, aarch64)
+- macOS (Intel, Apple Silicon)
+
+The script will install to `/usr/local/bin` (if you have write permission) or `~/.local/bin` (otherwise).
+
 ### Using Cargo
+
+```bash
+cargo install jjit
+```
+
+Or from source:
 
 ```bash
 cargo install --path .

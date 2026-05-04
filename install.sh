@@ -1,214 +1,139 @@
-#!/bin/bash
+#!/usr/bin/env sh
+
 set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+REPO="LaneSun/jjit"
+INSTALL_DIR=""
 
-# Configuration
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
-CARGO_DIR="$HOME/.cargo/bin"
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Detect OS
+OS=$(uname -s)
+case "$OS" in
+    Linux*)     OS_TYPE="linux";;
+    Darwin*)    OS_TYPE="macos";;
+    *)          echo "Unsupported OS: $OS"; exit 1;;
+esac
 
-# Functions
-print_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
+# Detect architecture
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)     ARCH_TYPE="x86_64";;
+    amd64)      ARCH_TYPE="x86_64";;
+    arm64)      ARCH_TYPE="aarch64";;
+    aarch64)    ARCH_TYPE="aarch64";;
+    *)          echo "Unsupported architecture: $ARCH"; exit 1;;
+esac
 
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
+# Build target string
+if [ "$OS_TYPE" = "linux" ]; then
+    TARGET="${ARCH_TYPE}-unknown-linux-gnu"
+else
+    TARGET="${ARCH_TYPE}-apple-darwin"
+fi
 
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-check_dependency() {
-    if ! command -v "$1" &> /dev/null; then
-        print_error "$1 is not installed. Please install it first."
-        exit 1
-    fi
-    print_success "$1 is installed"
-}
-
-detect_best_install_dir() {
-    # Prefer ~/.cargo/bin if it exists and is in PATH
-    if [[ -d "$CARGO_DIR" ]] && [[ ":$PATH:" == *":$CARGO_DIR:"* ]]; then
-        INSTALL_DIR="$CARGO_DIR"
-        print_info "Using cargo bin directory: $INSTALL_DIR"
-    elif [[ -d "$HOME/.local/bin" ]] && [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
-        INSTALL_DIR="$HOME/.local/bin"
-        print_info "Using ~/.local/bin"
-    else
-        INSTALL_DIR="$HOME/.local/bin"
-        print_warning "~/.local/bin not in PATH. Will install there and show instructions."
-    fi
-}
-
-build_project() {
-    print_info "Building jjit in release mode..."
-    cd "$REPO_DIR"
-    
-    if ! cargo build --release 2>&1; then
-        print_error "Build failed"
-        exit 1
-    fi
-    
-    print_success "Build successful"
-}
-
-install_binary() {
-    print_info "Installing jjit to $INSTALL_DIR..."
-    
-    # Create directory if needed
+# Determine install directory
+if [ -w /usr/local/bin ] 2>/dev/null || [ "$(id -u)" -eq 0 ]; then
+    INSTALL_DIR="/usr/local/bin"
+else
+    INSTALL_DIR="$HOME/.local/bin"
     mkdir -p "$INSTALL_DIR"
+fi
+
+# Check if jjit is already installed
+if command -v jjit >/dev/null 2>&1; then
+    EXISTING_PATH=$(command -v jjit)
+    echo "jjit is already installed at: $EXISTING_PATH"
     
-    # Copy binary
-    cp "$REPO_DIR/target/release/jjit" "$INSTALL_DIR/jjit"
+    # Check version
+    if jjit --version >/dev/null 2>&1; then
+        EXISTING_VERSION=$(jjit --version)
+        echo "Current version: $EXISTING_VERSION"
+    fi
+    
+    printf "Do you want to reinstall/overwrite? [y/N] "
+    read -r REPLY
+    case "$REPLY" in
+        y|Y|yes|YES) echo "Proceeding with installation...";;
+        *) echo "Installation cancelled."; exit 0;;
+    esac
+fi
+
+# Create temp directory
+TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+# Download URL
+DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/jjit-${TARGET}.tar.gz"
+
+echo "Detected platform: ${OS_TYPE} ${ARCH_TYPE}"
+echo "Downloading jjit from GitHub releases..."
+echo "  URL: ${DOWNLOAD_URL}"
+
+# Download
+cd "$TMP_DIR"
+if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$DOWNLOAD_URL" -o jjit.tar.gz
+elif command -v wget >/dev/null 2>&1; then
+    wget -q "$DOWNLOAD_URL" -O jjit.tar.gz
+else
+    echo "Error: Neither curl nor wget is installed."
+    exit 1
+fi
+
+# Extract
+echo "Extracting..."
+tar xzf jjit.tar.gz
+
+# Check if binary exists
+if [ ! -f "jjit" ]; then
+    echo "Error: Expected binary 'jjit' not found in archive."
+    exit 1
+fi
+
+# Install
+if [ "$INSTALL_DIR" = "/usr/local/bin" ] && [ ! -w "$INSTALL_DIR" ]; then
+    echo "Installing to ${INSTALL_DIR} (requires sudo)..."
+    sudo mv jjit "$INSTALL_DIR/"
+    sudo chmod +x "$INSTALL_DIR/jjit"
+else
+    echo "Installing to ${INSTALL_DIR}..."
+    mv jjit "$INSTALL_DIR/"
     chmod +x "$INSTALL_DIR/jjit"
-    
-    print_success "jjit installed to $INSTALL_DIR/jjit"
-}
+fi
 
-check_path() {
-    if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-        print_warning "$INSTALL_DIR is not in your PATH"
-        echo ""
-        echo "Add the following to your shell configuration file:"
-        echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
-        echo ""
-        echo "For bash: ~/.bashrc"
-        echo "For zsh: ~/.zshrc"
-        echo "For fish: ~/.config/fish/config.fish"
-    else
-        print_success "$INSTALL_DIR is already in PATH"
-    fi
-}
-
-verify_installation() {
-    print_info "Verifying installation..."
-    
-    if command -v jjit &> /dev/null; then
-        local version
-        version=$(jjit --version 2>&1 || echo "unknown")
-        print_success "jjit is available: $version"
-        
-        echo ""
-        echo "Quick start:"
-        echo "  jjit config set api_key <your-deepseek-api-key>"
-        echo "  jjit commit              # Auto-generate commit message"
-        echo "  jjit goto \"initial\"      # Checkout specific commit"
-        echo "  jjit pack \"all\"          # Squash commits"
-        echo ""
-        echo "For more information: jjit --help"
-    else
-        print_error "jjit is not in PATH. Please check your installation."
-        exit 1
-    fi
-}
-
-uninstall() {
-    print_info "Uninstalling jjit..."
-    
-    if [[ -f "$INSTALL_DIR/jjit" ]]; then
-        rm "$INSTALL_DIR/jjit"
-        print_success "Removed $INSTALL_DIR/jjit"
-    else
-        print_warning "jjit not found in $INSTALL_DIR"
-    fi
-    
-    # Also check cargo bin
-    if [[ -f "$CARGO_DIR/jjit" ]]; then
-        rm "$CARGO_DIR/jjit"
-        print_success "Removed $CARGO_DIR/jjit"
-    fi
-}
-
-# Help
-show_help() {
-    cat << EOF
-jjit Installer
-
-Usage: $0 [OPTIONS] [COMMAND]
-
-Commands:
-    install     Install jjit (default)
-    uninstall   Remove jjit
-    help        Show this help message
-
-Options:
-    --dir DIR   Install to specific directory (default: auto-detect)
-    --help      Show this help message
-
-Examples:
-    $0                          # Install to default location
-    $0 --dir /usr/local/bin     # Install to specific directory
-    $0 uninstall                # Remove jjit
-EOF
-}
-
-# Main
-main() {
-    local command="install"
-    
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            install|uninstall|help)
-                command="$1"
-                shift
-                ;;
-            --dir)
-                INSTALL_DIR="$2"
-                shift 2
-                ;;
-            --help|-h)
-                show_help
-                exit 0
-                ;;
-            *)
-                print_error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-    done
-    
-    echo "╔════════════════════════════════════╗"
-    echo "║      jjit Installer v0.1.0        ║"
-    echo "╚════════════════════════════════════╝"
+# Verify installation
+if command -v jjit >/dev/null 2>&1; then
     echo ""
+    echo "Successfully installed jjit!"
+    jjit --version
+else
+    echo ""
+    echo "jjit installed to: ${INSTALL_DIR}/jjit"
     
-    case "$command" in
-        install)
-            print_info "Checking dependencies..."
-            check_dependency "cargo"
-            check_dependency "jj"
-            
-            if [[ -z "${INSTALL_DIR+x}" ]]; then
-                detect_best_install_dir
-            fi
-            
-            build_project
-            install_binary
-            check_path
-            verify_installation
+    # Check if install dir is in PATH
+    case ":$PATH:" in
+        *":$INSTALL_DIR:"*) 
+            echo "But 'jjit' command not found. Please restart your terminal or run:"
+            echo "  source ~/.bashrc"
             ;;
-        uninstall)
-            detect_best_install_dir
-            uninstall
-            ;;
-        help)
-            show_help
+        *)
+            echo ""
+            echo "WARNING: ${INSTALL_DIR} is not in your PATH."
+            echo "Add the following to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
+            echo ""
+            echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+            echo ""
+            echo "Then run: source ~/.bashrc  (or ~/.zshrc)"
             ;;
     esac
-}
+fi
 
-main "$@"
+echo ""
+echo "Next steps:"
+echo "  1. Set up your API key:"
+echo "     jjit config set api_key sk-your-api-key-here"
+echo ""
+echo "  2. Or use environment variable:"
+echo "     export DEEPSEEK_API_KEY=sk-your-api-key-here"
+echo ""
+echo "  3. Try auto-commit:"
+echo "     jjit commit"
