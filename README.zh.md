@@ -63,8 +63,17 @@ curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/LaneSun/j
 **支持的平台：**
 - Linux (x86_64, aarch64)
 - macOS (Intel, Apple Silicon)
+- Windows (x86_64)
 
 脚本会优先安装到 `/usr/local/bin`（如果你有写入权限），否则安装到 `~/.local/bin`。
+
+#### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/LaneSun/jjit/main/install.ps1 | iex
+```
+
+脚本会安装到 `%LOCALAPPDATA%\jjit` 并添加到用户 PATH。
 
 ### 方式二：使用 Cargo
 

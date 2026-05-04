@@ -63,8 +63,17 @@ This automatically detects your platform, downloads the latest binary from GitHu
 **Supported platforms:**
 - Linux (x86_64, aarch64)
 - macOS (Intel, Apple Silicon)
+- Windows (x86_64)
 
 The script will install to `/usr/local/bin` (if you have write permission) or `~/.local/bin` (otherwise).
+
+#### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/LaneSun/jjit/main/install.ps1 | iex
+```
+
+The script installs to `%LOCALAPPDATA%\jjit` and adds it to your user PATH.
 
 ### Using Cargo
 
