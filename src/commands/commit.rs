@@ -5,31 +5,6 @@ use crate::jj_util;
 use crate::llm::LlmClient;
 use crate::output::{parse_xml_output, CommitOutput, LlmOutput};
 
-const SYSTEM_PROMPT: &str = r#"You are an expert at writing commit messages following the Conventional Commits specification.
-
-Analyze the provided diff and generate an appropriate commit message.
-
-You MUST respond in XML format with the following structure:
-
-```xml
-<commit>
-  <message>The commit message title (follow Conventional Commits)</message>
-  <body>Optional detailed description (can be multi-line)</body>
-</commit>
-```
-
-Rules:
-- message should follow Conventional Commits format (e.g., "feat(scope): description")
-- body is optional, use it for breaking changes or detailed explanations
-- If there are no changes to commit, respond with:
-
-```xml
-<reply>
-  <message>No changes detected in the working copy</message>
-</reply>
-```
-"#;
-
 pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
     let verbose = config.get("verbose") == Some("true".to_string());
     let show_prompt = config.get("show_prompt") == Some("true".to_string());
@@ -37,14 +12,14 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
     let debug = config.get("debug") == Some("true".to_string());
 
     // Check if there are changes
-    if !jj_util::has_changes().context("Failed to check working copy status")? {
-        println!("No changes detected in the working copy");
+    if !jj_util::has_changes().context(crate::t!("errors.config_read"))? {
+        println!("{}", crate::t!("errors.no_changes"));
         return Ok(());
     }
 
     // Get diff information
-    let diff_summary = jj_util::get_diff_summary().context("Failed to get diff summary")?;
-    let diff = jj_util::get_diff().context("Failed to get diff")?;
+    let diff_summary = jj_util::get_diff_summary().context(crate::t!("errors.config_read"))?;
+    let diff = jj_util::get_diff().context(crate::t!("errors.config_read"))?;
 
     let api_key = config.ensure_api_key()?;
     let base_url = config
@@ -67,7 +42,7 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
         diff
     );
 
-    let system_prompt = add_language_hint(SYSTEM_PROMPT, config);
+    let system_prompt = add_language_hint(crate::t!("prompts.commit_system").as_ref(), config);
 
     let response = client
         .chat(
@@ -79,9 +54,9 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
             debug,
         )
         .await
-        .context("Failed to get LLM response")?;
+        .context(crate::t!("errors.llm_failed"))?;
 
-    let output = parse_xml_output(&response).context("Failed to parse LLM XML response")?;
+    let output = parse_xml_output(&response).context(crate::t!("errors.parse_xml"))?;
 
     match output {
         LlmOutput::Commit(CommitOutput { message, body, .. }) => {
@@ -92,17 +67,17 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
             };
 
             if dry_run {
-                println!("[dry-run] {}", full_message);
+                println!("{}", crate::t!("messages.commit_dry_run", arg = full_message));
             } else {
-                jj_util::commit(&full_message).context("Failed to create commit")?;
-                println!("[commit] {}", full_message);
+                jj_util::commit(&full_message).context(crate::t!("errors.config_read"))?;
+                println!("{}", crate::t!("messages.commit_success", arg = full_message));
             }
         }
         LlmOutput::Reply(reply) => {
             println!("{}", reply.message);
         }
         _ => {
-            return Err(anyhow::anyhow!("Unexpected response type from LLM"));
+            return Err(anyhow::anyhow!(crate::t!("errors.unexpected_response")));
         }
     }
 

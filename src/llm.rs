@@ -82,19 +82,24 @@ impl LlmClient {
         debug: bool,
     ) -> Result<String> {
         if show_prompt {
-            eprintln!("\n=== System Prompt ===");
+            eprintln!("{}", crate::t!("messages.system_prompt"));
             eprintln!("{}", system_prompt);
-            eprintln!("\n=== User Prompt ===");
+            eprintln!("{}", crate::t!("messages.user_prompt"));
             eprintln!("{}", user_prompt);
             eprintln!();
         }
 
         if verbose {
-            eprintln!("Thinking...");
+            eprintln!("{}", crate::t!("messages.thinking"));
         }
 
         if debug {
-            eprintln!("[DEBUG] Model: {}, Base URL: {}", self.model, self.base_url);
+            let model_str = self.model.as_str();
+            let base_url_str = self.base_url.as_str();
+            eprintln!(
+                "{}",
+                crate::t!("messages.debug_model", arg1 = model_str, arg2 = base_url_str)
+            );
         }
 
         let mut last_error = None;
@@ -106,7 +111,7 @@ impl LlmClient {
             {
                 Ok(response) => {
                     if verbose {
-                        eprintln!("LLM response received");
+                        eprintln!("{}", crate::t!("messages.llm_response_received"));
                     }
                     return Ok(response);
                 }
@@ -116,11 +121,12 @@ impl LlmClient {
 
                     if attempt < MAX_RETRIES && is_retryable {
                         let delay = RETRY_DELAYS[attempt as usize];
+                        let attempt_str = (attempt + 1).to_string();
+                        let max_retries_str = (MAX_RETRIES + 1).to_string();
+                        let delay_str = delay.to_string();
                         eprintln!(
-                            "LLM request failed (attempt {}/{}), retrying in {}s...",
-                            attempt + 1,
-                            MAX_RETRIES + 1,
-                            delay
+                            "{}",
+                            crate::t!("messages.llm_retry", arg1 = attempt_str, arg2 = max_retries_str, arg3 = delay_str)
                         );
                         sleep(Duration::from_secs(delay)).await;
                     } else {
@@ -130,7 +136,7 @@ impl LlmClient {
             }
         }
 
-        Err(last_error.unwrap_or_else(|| anyhow::anyhow!("LLM request failed after all retries")))
+        Err(last_error.unwrap_or_else(|| anyhow::anyhow!(crate::t!("errors.llm_failed"))))
     }
 
     async fn chat_stream(
@@ -170,9 +176,10 @@ impl LlmClient {
         };
 
         if debug {
+            let base_url_str = self.base_url.as_str();
             eprintln!(
-                "[DEBUG] Sending streaming request to {}/chat/completions",
-                self.base_url
+                "{}",
+                crate::t!("messages.debug_request", arg = base_url_str)
             );
         }
 
@@ -185,7 +192,7 @@ impl LlmClient {
             .timeout(Duration::from_secs(120))
             .send()
             .await
-            .with_context(|| "Failed to send request to DeepSeek API")?;
+            .with_context(|| crate::t!("errors.llm_failed"))?;
 
         let status = response.status();
         if !status.is_success() {
@@ -235,7 +242,11 @@ impl LlmClient {
                             let _ = std::io::stderr().flush();
                         }
                         if debug {
-                            eprintln!("[DEBUG] Response content length: {}", content.len());
+                            let content_len_str = content.len().to_string();
+                            eprintln!(
+                                "{}",
+                                crate::t!("messages.debug_response_length", arg = content_len_str)
+                            );
                         }
                         return Ok(content);
                     }
@@ -286,9 +297,10 @@ impl LlmClient {
                                         let _ = std::io::stderr().flush();
                                     }
                                     if debug {
+                                        let content_len_str = content.len().to_string();
                                         eprintln!(
-                                            "[DEBUG] Response content length: {}",
-                                            content.len()
+                                            "{}",
+                                            crate::t!("messages.debug_response_length", arg = content_len_str)
                                         );
                                     }
                                     return Ok(content);
@@ -297,7 +309,11 @@ impl LlmClient {
                         }
                         Err(e) => {
                             if debug {
-                                eprintln!("[DEBUG] Failed to parse stream chunk: {}", e);
+                                let error_str = e.to_string();
+                                eprintln!(
+                                    "{}",
+                                    crate::t!("messages.debug_parse_chunk", arg = error_str)
+                                );
                             }
                         }
                     }
@@ -315,7 +331,11 @@ impl LlmClient {
         }
 
         if debug {
-            eprintln!("[DEBUG] Response content length: {}", content.len());
+            let content_len_str = content.len().to_string();
+            eprintln!(
+                "{}",
+                crate::t!("messages.debug_response_length", arg = content_len_str)
+            );
         }
 
         Ok(content)

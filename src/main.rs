@@ -6,6 +6,7 @@ use jjit::config::Config;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    jjit::init_locale();
     let cli = Cli::parse();
     let mut config = Config::load()?;
 

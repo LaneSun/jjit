@@ -5,47 +5,6 @@ use crate::jj_util;
 use crate::llm::LlmClient;
 use crate::output::{parse_xml_output, LlmOutput, PackOutput};
 
-const SYSTEM_PROMPT: &str = r#"You are an expert at organizing version control history.
-
-Given a user's request and the commit history, determine which commits should be combined (squashed) together.
-
-You MUST respond in XML format with the following structure:
-
-```xml
-<pack>
-  <summary>Brief description of what commits are being combined and why</summary>
-  <commits>commit_id1,commit_id2,commit_id3</commits>
-  <message>The new commit message for the combined commit</message>
-  <body>Optional detailed description</body>
-</pack>
-```
-
-Rules:
-- commits is a comma-separated list of full commit IDs to squash together (from oldest to newest)
-- message should follow Conventional Commits format
-- summary explains which commits are being combined
-- Be smart about interpreting user requests:
-  - "all commits" or "everything" means combine all non-root, non-empty commits
-  - "today's commits" means commits made today (use the Date field)
-  - "last N commits" means the N most recent non-empty commits
-  - "related to X" means commits whose descriptions mention X
-- Do NOT include empty commits (like the working copy) in the commits list
-- Important: If there is only one non-empty, non-root commit, do NOT try to pack it. Respond with:
-  ```xml
-  <reply>
-    <message>Only one commit found, nothing to pack</message>
-  </reply>
-  ```
-- Always try to find matching commits if the request makes sense
-- If there are no commits to pack, respond with:
-
-```xml
-<reply>
-  <message>No matching commits found to pack</message>
-</reply>
-```
-"#;
-
 pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
     let verbose = config.get("verbose") == Some("true".to_string());
     let show_prompt = config.get("show_prompt") == Some("true".to_string());
@@ -53,7 +12,7 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
     let debug = config.get("debug") == Some("true".to_string());
 
     // Get commit history
-    let log_entries = jj_util::get_log_all().context("Failed to get commit history")?;
+    let log_entries = jj_util::get_log_all().context(crate::t!("errors.config_read"))?;
 
     // Filter out root and empty commits before sending to LLM
     let meaningful_entries: Vec<_> = log_entries
@@ -88,7 +47,7 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
 
     let user_prompt = format!("User request: {}\n\nCommit history:\n{}", query, log_text);
 
-    let system_prompt = add_language_hint(SYSTEM_PROMPT, config);
+    let system_prompt = add_language_hint(crate::t!("prompts.pack_system").as_ref(), config);
 
     let response = client
         .chat(
@@ -100,9 +59,9 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
             debug,
         )
         .await
-        .context("Failed to get LLM response")?;
+        .context(crate::t!("errors.llm_failed"))?;
 
-    let output = parse_xml_output(&response).context("Failed to parse LLM XML response")?;
+    let output = parse_xml_output(&response).context(crate::t!("errors.parse_xml"))?;
 
     match output {
         LlmOutput::Pack(PackOutput {
@@ -114,7 +73,7 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
             println!("{}", summary);
 
             if commits.is_empty() {
-                return Err(anyhow::anyhow!("LLM returned empty commits list for pack"));
+                return Err(anyhow::anyhow!(crate::t!("errors.pack_empty")));
             }
 
             // Filter out empty commits (like working copy)
@@ -124,7 +83,7 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
                 .collect();
 
             if non_empty_commits.len() <= 1 {
-                println!("Only one non-empty commit found, nothing to pack");
+                println!("{}", crate::t!("messages.only_one_commit"));
                 return Ok(());
             }
 
@@ -139,10 +98,10 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
             };
 
             if dry_run {
+                let count_str = non_empty_commits.len().to_string();
                 println!(
-                    "[dry-run] pack {} commits into {}",
-                    non_empty_commits.len(),
-                    target_change_id
+                    "{}",
+                    crate::t!("messages.pack_dry_run", arg1 = count_str, arg2 = target_change_id)
                 );
             } else {
                 // Squash each subsequent commit into the first one
@@ -157,18 +116,18 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
                 }
                 // Update description of the combined commit
                 jj_util::describe_change(target_change_id, &full_message)
-                    .context("Failed to describe combined commit")?;
+                    .context(crate::t!("errors.config_read"))?;
                 // Create a new working copy on top of the packed commit
                 jj_util::new_commit(target_change_id)
-                    .context("Failed to create new working copy after pack")?;
-                println!("[pack] {}", full_message);
+                    .context(crate::t!("errors.config_read"))?;
+                println!("{}", crate::t!("messages.pack_success", arg = full_message));
             }
         }
         LlmOutput::Reply(reply) => {
             println!("{}", reply.message);
         }
         _ => {
-            return Err(anyhow::anyhow!("Unexpected response type from LLM"));
+            return Err(anyhow::anyhow!(crate::t!("errors.unexpected_response")));
         }
     }
 

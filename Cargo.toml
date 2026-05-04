@@ -29,3 +29,4 @@ directories = "5.0"
 chrono = "0.4"
 quick-xml = { version = "0.36", features = ["serialize"] }
 futures-util = "0.3"
+rust-i18n = "4.0"

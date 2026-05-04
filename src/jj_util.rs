@@ -15,7 +15,8 @@ fn map_run_error(e: vcs_runner::RunError) -> anyhow::Error {
 fn run_jj_with_debug(args: &[&str]) -> Result<String> {
     let path = repo_path();
     if std::env::var("JJIT_DEBUG").is_ok() || std::env::var("DEBUG").is_ok() {
-        eprintln!("[DEBUG] jj {}", args.join(" "));
+        let args_str = args.join(" ");
+        eprintln!("{}", crate::t!("messages.debug_jj_command", arg = args_str));
     }
     run_jj_utf8(&path, args).map_err(map_run_error)
 }

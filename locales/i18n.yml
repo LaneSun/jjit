@@ -1,0 +1,5 @@
+i18n:
+  # 加载翻译文件目录
+  locales: "locales"
+  # 默认语言
+  default_locale: "en"

@@ -1,0 +1,161 @@
+about: AI-powered jj version management tool
+version: version
+commit:
+  about: Check changes and auto-generate commit message via LLM
+  dry_run: Preview the commit message without creating it
+goto:
+  about: Find and checkout target commit via LLM
+  query: Description of the target commit
+  dry_run: Preview the target without checking out
+pack:
+  about: Combine commits via LLM
+  query: Description of commits to pack
+  dry_run: Preview the pack operation without executing
+config:
+  about: Manage configuration
+  set:
+    about: Set a configuration value
+    key: Configuration key
+    value: Configuration value
+    global: Set in global config
+  get:
+    about: Get a configuration value
+    key: Configuration key
+  list:
+    about: List all configuration values
+errors:
+  no_api_key: "DeepSeek API key not configured. Run: jjit config set api_key <your-key>"
+  no_changes: No changes detected in the working copy
+  llm_failed: LLM request failed
+  parse_xml: Failed to parse LLM XML response
+  unexpected_response: Unexpected response type from LLM
+  pack_empty: LLM returned empty commits list for pack
+  no_matching_commits: Could not find a commit matching your request
+  config_read: Failed to read global config
+  config_parse: Failed to parse global config
+  config_write: Failed to write global config
+  config_dir: Failed to create config directory
+messages:
+  commit_dry_run: "[dry-run] %{arg}"
+  commit_success: "[commit] %{arg}"
+  pack_dry_run: "[dry-run] pack %{arg1} commits into %{arg2}"
+  pack_success: "[pack] %{arg}"
+  goto_dry_run: "\n[Dry Run] Would checkout: %{arg}"
+  goto_success: "Checked out: %{arg}"
+  only_one_commit: Only one non-empty commit found, nothing to pack
+  config_set_global: "Set %{arg1} = %{arg2} (global)"
+  config_set_local: "Set %{arg1} = %{arg2} (local)"
+  config_not_set: (not set)
+  api_key_masked: "%{arg1} = %{arg2}****"
+  thinking: Thinking...
+  llm_response_received: LLM response received
+  llm_retry: "LLM request failed (attempt %{arg1}/%{arg2}), retrying in %{arg3}s..."
+  system_prompt: "\n=== System Prompt ==="
+  user_prompt: "\n=== User Prompt ==="
+  debug_model: "[DEBUG] Model: %{arg1}, Base URL: %{arg2}"
+  debug_request: "[DEBUG] Sending streaming request to %{arg}/chat/completions"
+  debug_response_length: "[DEBUG] Response content length: %{arg}"
+  debug_parse_chunk: "[DEBUG] Failed to parse stream chunk: %{arg}"
+  debug_jj_command: "[DEBUG] jj %{arg}"
+  no_color_disabled: Colored output disabled
+  show_thinking_disabled: Thinking process hidden
+  show_prompt_enabled: Prompt display enabled
+  dry_run_enabled: Dry-run mode enabled
+  verbose_enabled: Verbose output enabled
+  debug_enabled: Debug mode enabled
+  language_set: "Language set to: %{arg}"
+  model_set: "Model set to: %{arg}"
+  base_url_set: "Base URL set to: %{arg}"
+prompts:
+  commit_system: |
+    You are an expert at writing commit messages following the Conventional Commits specification.
+    
+    Analyze the provided diff and generate an appropriate commit message.
+    
+    You MUST respond in XML format with the following structure:
+    
+    ```xml
+    <commit>
+      <message>The commit message title (follow Conventional Commits)</message>
+      <body>Optional detailed description (can be multi-line)</body>
+    </commit>
+    ```
+    
+    Rules:
+    - message should follow Conventional Commits format (e.g., "feat(scope): description")
+    - body is optional, use it for breaking changes or detailed explanations
+    - If there are no changes to commit, respond with:
+    
+    ```xml
+    <reply>
+      <message>No changes detected in the working copy</message>
+    </reply>
+    ```
+  goto_system: |
+    You are an expert at navigating version control history.
+    
+    Given a user's request and the commit history, find the most appropriate commit to checkout.
+    
+    You MUST respond in XML format with the following structure:
+    
+    ```xml
+    <goto>
+      <summary>Brief description of why this commit was selected</summary>
+      <target>The commit ID or revision to checkout</target>
+    </goto>
+    
+    Rules:
+    - target should be a valid commit ID (full ID from the history) or jj revision alias (e.g., "@-", "@--")
+    - Use the full commit ID from the history for accuracy
+    - summary explains why this commit matches the user's request
+    - Be smart about interpreting user requests:
+      - "initial commit" means the first commit in the history
+      - "latest" or "most recent" means the most recent commit
+      - "before X" means the commit just before the one that introduced X
+      - "when X was added" means the commit that introduced X
+    - If you cannot find a matching commit, respond with:
+    
+    ```xml
+    <reply>
+      <message>Could not find a commit matching your request</message>
+    </reply>
+    ```
+  pack_system: |
+    You are an expert at organizing version control history.
+    
+    Given a user's request and the commit history, determine which commits should be combined (squashed) together.
+    
+    You MUST respond in XML format with the following structure:
+    
+    ```xml
+    <pack>
+      <summary>Brief description of what commits are being combined and why</summary>
+      <commits>commit_id1,commit_id2,commit_id3</commits>
+      <message>The new commit message for the combined commit</message>
+      <body>Optional detailed description</body>
+    </pack>
+    
+    Rules:
+    - commits is a comma-separated list of full commit IDs to squash together (from oldest to newest)
+    - message should follow Conventional Commits format
+    - summary explains which commits are being combined
+    - Be smart about interpreting user requests:
+      - "all commits" or "everything" means combine all non-root, non-empty commits
+      - "today's commits" means commits made today (use the Date field)
+      - "last N commits" means the N most recent non-empty commits
+      - "related to X" means commits whose descriptions mention X
+    - Do NOT include empty commits (like the working copy) in the commits list
+    - Important: If there is only one non-empty, non-root commit, do NOT try to pack it. Respond with:
+      ```xml
+      <reply>
+        <message>Only one commit found, nothing to pack</message>
+      </reply>
+      ```
+    - Always try to find matching commits if the request makes sense
+    - If there are no commits to pack, respond with:
+    
+    ```xml
+    <reply>
+      <message>No matching commits found to pack</message>
+    </reply>
+    ```

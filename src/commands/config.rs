@@ -28,17 +28,17 @@ pub fn run(action: ConfigAction) -> Result<()> {
 
             if global {
                 config.save_global()?;
-                println!("Set {} = {} (global)", key, value);
+                println!("{}", crate::t!("messages.config_set_global", arg1 = key, arg2 = value));
             } else {
                 config.save_local()?;
-                println!("Set {} = {} (local)", key, value);
+                println!("{}", crate::t!("messages.config_set_local", arg1 = key, arg2 = value));
             }
         }
         ConfigAction::Get { key } => {
             let config = Config::load()?;
             match config.get(&key) {
                 Some(value) => println!("{}", value),
-                None => println!("(not set)"),
+                None => println!("{}", crate::t!("messages.config_not_set")),
             }
         }
         ConfigAction::List => {
@@ -46,7 +46,11 @@ pub fn run(action: ConfigAction) -> Result<()> {
             for (key, value) in &config.values {
                 // Don't print API key in full
                 if key == "api_key" && value.len() > 8 {
-                    println!("{} = {}****", key, &value[..8]);
+                    let masked = &value[..8];
+                    println!(
+                        "{}",
+                        crate::t!("messages.api_key_masked", arg1 = key, arg2 = masked)
+                    );
                 } else {
                     println!("{} = {}", key, value);
                 }

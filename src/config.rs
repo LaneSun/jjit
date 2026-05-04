@@ -66,9 +66,9 @@ impl Config {
         let path = Self::global_config_path()?;
         if path.exists() {
             let content = fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read global config from {:?}", path))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_read"), path))?;
             let config: Config = toml::from_str(&content)
-                .with_context(|| format!("Failed to parse global config from {:?}", path))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_parse"), path))?;
             Ok(Some(config))
         } else {
             Ok(None)
@@ -79,9 +79,9 @@ impl Config {
         let path = Self::local_config_path();
         if path.exists() {
             let content = fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read local config from {:?}", path))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_read"), path))?;
             let config: Config = toml::from_str(&content)
-                .with_context(|| format!("Failed to parse local config from {:?}", path))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_parse"), path))?;
             Ok(Some(config))
         } else {
             Ok(None)
@@ -92,12 +92,12 @@ impl Config {
         let path = Self::global_config_path()?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create config directory {:?}", parent))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_dir"), parent))?;
         }
         let content =
-            toml::to_string_pretty(self).with_context(|| "Failed to serialize config to TOML")?;
+            toml::to_string_pretty(self).with_context(|| crate::t!("errors.config_write"))?;
         fs::write(&path, content)
-            .with_context(|| format!("Failed to write global config to {:?}", path))?;
+            .with_context(|| format!("{} {:?}", crate::t!("errors.config_write"), path))?;
         Ok(())
     }
 
@@ -105,18 +105,18 @@ impl Config {
         let path = Self::local_config_path();
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create config directory {:?}", parent))?;
+                .with_context(|| format!("{} {:?}", crate::t!("errors.config_dir"), parent))?;
         }
         let content =
-            toml::to_string_pretty(self).with_context(|| "Failed to serialize config to TOML")?;
+            toml::to_string_pretty(self).with_context(|| crate::t!("errors.config_write"))?;
         fs::write(&path, content)
-            .with_context(|| format!("Failed to write local config to {:?}", path))?;
+            .with_context(|| format!("{} {:?}", crate::t!("errors.config_write"), path))?;
         Ok(())
     }
 
     pub fn global_config_path() -> Result<PathBuf> {
         let dirs = ProjectDirs::from("com", "jjit", "jjit")
-            .context("Failed to determine project directories")?;
+            .context(crate::t!("errors.config_dir"))?;
         Ok(dirs.config_dir().join("config.toml"))
     }
 
@@ -126,7 +126,7 @@ impl Config {
 
     pub fn ensure_api_key(&self) -> Result<String> {
         self.get("api_key")
-            .context("DeepSeek API key not configured. Run: jjit config set api_key <your-key>")
+            .context(crate::t!("errors.no_api_key"))
     }
 
     /// Resolve the effective language.
