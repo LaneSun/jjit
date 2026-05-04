@@ -101,7 +101,11 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
                 let count_str = non_empty_commits.len().to_string();
                 println!(
                     "{}",
-                    crate::t!("messages.pack_dry_run", arg1 = count_str, arg2 = target_change_id)
+                    crate::t!(
+                        "messages.pack_dry_run",
+                        arg1 = count_str,
+                        arg2 = target_change_id
+                    )
                 );
             } else {
                 // Squash each subsequent commit into the first one
@@ -118,8 +122,7 @@ pub async fn run(config: &Config, query: &str, dry_run: bool) -> Result<()> {
                 jj_util::describe_change(target_change_id, &full_message)
                     .context(crate::t!("errors.config_read"))?;
                 // Create a new working copy on top of the packed commit
-                jj_util::new_commit(target_change_id)
-                    .context(crate::t!("errors.config_read"))?;
+                jj_util::new_commit(target_change_id).context(crate::t!("errors.config_read"))?;
                 println!("{}", crate::t!("messages.pack_success", arg = full_message));
             }
         }

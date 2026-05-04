@@ -67,10 +67,16 @@ pub async fn run(config: &Config, dry_run: bool) -> Result<()> {
             };
 
             if dry_run {
-                println!("{}", crate::t!("messages.commit_dry_run", arg = full_message));
+                println!(
+                    "{}",
+                    crate::t!("messages.commit_dry_run", arg = full_message)
+                );
             } else {
                 jj_util::commit(&full_message).context(crate::t!("errors.config_read"))?;
-                println!("{}", crate::t!("messages.commit_success", arg = full_message));
+                println!(
+                    "{}",
+                    crate::t!("messages.commit_success", arg = full_message)
+                );
             }
         }
         LlmOutput::Reply(reply) => {

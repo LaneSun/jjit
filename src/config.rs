@@ -115,8 +115,8 @@ impl Config {
     }
 
     pub fn global_config_path() -> Result<PathBuf> {
-        let dirs = ProjectDirs::from("com", "jjit", "jjit")
-            .context(crate::t!("errors.config_dir"))?;
+        let dirs =
+            ProjectDirs::from("com", "jjit", "jjit").context(crate::t!("errors.config_dir"))?;
         Ok(dirs.config_dir().join("config.toml"))
     }
 
@@ -125,8 +125,7 @@ impl Config {
     }
 
     pub fn ensure_api_key(&self) -> Result<String> {
-        self.get("api_key")
-            .context(crate::t!("errors.no_api_key"))
+        self.get("api_key").context(crate::t!("errors.no_api_key"))
     }
 
     /// Resolve the effective language.

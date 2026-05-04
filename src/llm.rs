@@ -98,7 +98,11 @@ impl LlmClient {
             let base_url_str = self.base_url.as_str();
             eprintln!(
                 "{}",
-                crate::t!("messages.debug_model", arg1 = model_str, arg2 = base_url_str)
+                crate::t!(
+                    "messages.debug_model",
+                    arg1 = model_str,
+                    arg2 = base_url_str
+                )
             );
         }
 
@@ -126,7 +130,12 @@ impl LlmClient {
                         let delay_str = delay.to_string();
                         eprintln!(
                             "{}",
-                            crate::t!("messages.llm_retry", arg1 = attempt_str, arg2 = max_retries_str, arg3 = delay_str)
+                            crate::t!(
+                                "messages.llm_retry",
+                                arg1 = attempt_str,
+                                arg2 = max_retries_str,
+                                arg3 = delay_str
+                            )
                         );
                         sleep(Duration::from_secs(delay)).await;
                     } else {
@@ -300,7 +309,10 @@ impl LlmClient {
                                         let content_len_str = content.len().to_string();
                                         eprintln!(
                                             "{}",
-                                            crate::t!("messages.debug_response_length", arg = content_len_str)
+                                            crate::t!(
+                                                "messages.debug_response_length",
+                                                arg = content_len_str
+                                            )
                                         );
                                     }
                                     return Ok(content);

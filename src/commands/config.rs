@@ -28,10 +28,16 @@ pub fn run(action: ConfigAction) -> Result<()> {
 
             if global {
                 config.save_global()?;
-                println!("{}", crate::t!("messages.config_set_global", arg1 = key, arg2 = value));
+                println!(
+                    "{}",
+                    crate::t!("messages.config_set_global", arg1 = key, arg2 = value)
+                );
             } else {
                 config.save_local()?;
-                println!("{}", crate::t!("messages.config_set_local", arg1 = key, arg2 = value));
+                println!(
+                    "{}",
+                    crate::t!("messages.config_set_local", arg1 = key, arg2 = value)
+                );
             }
         }
         ConfigAction::Get { key } => {
