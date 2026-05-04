@@ -51,6 +51,9 @@ get_latest_version() {
 # Function to compare versions (returns 0 if v1 < v2)
 version_lt() {
     # Simple version comparison: split by dots and compare numerically
+    if [ "$1" = "$2" ]; then
+        return 1  # Equal is not less than
+    fi
     printf '%s\n%s\n' "$1" "$2" | sort -t. -k1,1n -k2,2n -k3,3n | head -n1 | grep -qx "$1"
 }
 
@@ -199,8 +202,8 @@ fi
 
 echo ""
 echo "Next steps:"
-echo "  1. Set up your API key:"
-echo "     jjit config set api_key sk-your-api-key-here"
+echo "  1. Set up your API key (globally):"
+echo "     jjit config set api_key sk-your-api-key-here --global"
 echo ""
 echo "  2. Or use environment variable:"
 echo "     export DEEPSEEK_API_KEY=sk-your-api-key-here"
