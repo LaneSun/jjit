@@ -183,11 +183,9 @@ fn extract_fields(xml: &str) -> Result<std::collections::HashMap<String, String>
                 tag_stack.push(name);
                 current_text.clear();
             }
-            Ok(Event::Text(e)) => {
-                if !tag_stack.is_empty() {
-                    let text = e.unescape().unwrap_or_default().to_string();
-                    current_text.push_str(&text);
-                }
+            Ok(Event::Text(e)) if !tag_stack.is_empty() => {
+                let text = e.unescape().unwrap_or_default().to_string();
+                current_text.push_str(&text);
             }
             Ok(Event::End(e)) => {
                 let name = String::from_utf8_lossy(e.local_name().as_ref())
