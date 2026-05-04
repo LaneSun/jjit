@@ -130,16 +130,19 @@ prompts:
     
     ```xml
     <pack>
-      <summary>简要说明正在合并哪些提交以及原因</summary>
+      <summary>对合并后变更的简要描述</summary>
       <commits>commit_id1,commit_id2,commit_id3</commits>
-      <message>合并后提交的新提交信息</message>
+      <message>统一描述合并后变更的提交信息</message>
       <body>可选的详细描述</body>
     </pack>
     
     规则：
     - commits 是要合并的完整提交 ID 的逗号分隔列表（从最旧到最新）
-    - message 应遵循约定式提交格式
-    - summary 解释正在合并哪些提交
+    - message 应遵循约定式提交格式，描述变更时应该像这些变更是作为一个单一提交完成的
+    - 不要在 message 中使用 "合并"、"squash"、"pack"、"combine" 或 "整合" 等词汇
+    - 不要提及原始提交的存在或假设它们是分开的提交
+    - 将原始提交描述中的概念综合成一个连贯、统一的提交信息
+    - summary 解释合并后的变更完成了什么
     - 智能解释用户请求：
       - "所有提交" 或 "全部" 表示合并所有非根、非空提交
       - "今天的提交" 表示今天创建的提交（使用日期字段）

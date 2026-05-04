@@ -129,16 +129,19 @@ prompts:
     
     ```xml
     <pack>
-      <summary>Brief description of what commits are being combined and why</summary>
+      <summary>Brief description of the combined changes</summary>
       <commits>commit_id1,commit_id2,commit_id3</commits>
-      <message>The new commit message for the combined commit</message>
+      <message>A unified commit message describing the combined changes</message>
       <body>Optional detailed description</body>
     </pack>
     
     Rules:
     - commits is a comma-separated list of full commit IDs to squash together (from oldest to newest)
-    - message should follow Conventional Commits format
-    - summary explains which commits are being combined
+    - message should follow Conventional Commits format and describe the changes as if they were made in a single commit
+    - Do NOT use words like "merge", "squash", "pack", "combine", or "consolidate" in the message
+    - Do NOT refer to the original commits or assume they existed separately
+    - Synthesize the concepts from the original commit descriptions into a coherent, unified message
+    - summary explains what the combined changes accomplish
     - Be smart about interpreting user requests:
       - "all commits" or "everything" means combine all non-root, non-empty commits
       - "today's commits" means commits made today (use the Date field)
