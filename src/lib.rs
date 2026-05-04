@@ -5,6 +5,8 @@ pub mod jj_util;
 pub mod llm;
 pub mod output;
 
+use clap::CommandFactory;
+
 // Re-export rust_i18n macro for use across the crate
 pub use rust_i18n::t;
 
@@ -25,4 +27,32 @@ pub fn init_locale() {
         .unwrap_or("en");
 
     rust_i18n::set_locale(lang);
+}
+
+/// Build CLI command with localized about texts
+pub fn build_cli_command() -> clap::Command {
+    let mut cmd = crate::cli::Cli::command();
+    cmd = cmd.about(crate::t!("about"));
+
+    // Override subcommand about texts
+    let subcommands = [
+        ("commit", crate::t!("commit.about")),
+        ("goto", crate::t!("goto.about")),
+        ("pack", crate::t!("pack.about")),
+        ("config", crate::t!("config.about")),
+    ];
+
+    for (name, about) in subcommands {
+        cmd = cmd.mut_subcommand(name, |c| c.about(about));
+    }
+
+    // Override config subcommand about texts
+    cmd = cmd.mut_subcommand("config", |c| {
+        c.about(crate::t!("config.about"))
+            .mut_subcommand("set", |c| c.about(crate::t!("config.set.about")))
+            .mut_subcommand("get", |c| c.about(crate::t!("config.get.about")))
+            .mut_subcommand("list", |c| c.about(crate::t!("config.list.about")))
+    });
+
+    cmd
 }

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::Parser;
+use clap::FromArgMatches;
 
 use jjit::cli::{Cli, Commands};
 use jjit::config::Config;
@@ -7,7 +7,11 @@ use jjit::config::Config;
 #[tokio::main]
 async fn main() -> Result<()> {
     jjit::init_locale();
-    let cli = Cli::parse();
+
+    let cmd = jjit::build_cli_command();
+    let matches = cmd.get_matches();
+    let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
+
     let mut config = Config::load()?;
 
     // Override config from CLI flags
